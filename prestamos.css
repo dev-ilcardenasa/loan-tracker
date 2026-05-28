@@ -336,39 +336,40 @@ body::before {
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 
-/* ── FAB (Floating Action Buttons) ── */
-.fab-group {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
+/* ── Acciones de Encabezado (reubicación de FAB) ── */
+.section-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 90;
-  pointer-events: none;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 10px;
 }
-.fab-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  transition: transform 0.2s, opacity 0.2s;
+  transition: all 0.2s;
+  background: var(--surface);
   -webkit-tap-highlight-color: transparent;
 }
-.fab-btn:active { transform: scale(0.88); }
-.fab-btn span { font-size: 1.8rem; font-weight: 700; pointer-events: none; }
+.action-btn:active { transform: scale(0.92); }
+.action-btn span { font-size: 1.1rem; font-weight: 700; pointer-events: none; }
 
-.fab-btn.extra { background: var(--accent); color: #0c0c0c; }
-.fab-btn.abono { background: var(--blue); color: #0c0c0c; }
+.action-btn.extra { background: rgba(200,255,87,0.1); color: var(--accent); border-color: rgba(200,255,87,0.2); }
+.action-btn.abono { background: rgba(87,200,255,0.1); color: var(--blue); border-color: rgba(87,200,255,0.2); }
 
-/* Ocultar FAB si no estamos en detalle o si está pagado */
-#detail:not(.active) .fab-group { display: none; }
+.action-btn:hover { border-color: currentColor; background: rgba(255,255,255,0.05); }
+
+/* Ocultar acciones si no estamos en detalle */
+#detail:not(.active) .header-actions { display: none; }
 
 /* ── Extras (prestar más) ── */
 .extras-form {

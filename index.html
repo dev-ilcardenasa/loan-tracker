@@ -162,7 +162,17 @@
     </div>
 
     <!-- Movimientos -->
-    <h3 class="section-label" id="d-historial-label" style="margin:16px 0 10px">Movimientos</h3>
+    <div class="section-header">
+      <h3 class="section-label" id="d-historial-label" style="margin:0">Movimientos</h3>
+      <div class="header-actions" id="d-fab-group">
+        <button class="action-btn extra" id="fab-extra" onclick="openExtraModal()" title="Prestar más">
+          <span>+</span>
+        </button>
+        <button class="action-btn abono" id="fab-abono" onclick="openAbonoModal()" title="Registrar abono">
+          <span>✓</span>
+        </button>
+      </div>
+    </div>
     <div class="abonos-list" id="d-abonos-list" role="list"></div>
     <div class="empty-detail" id="d-empty">Sin movimientos aún.</div>
 
@@ -181,16 +191,6 @@
     <!-- Nota del préstamo (oculta) -->
     <div id="d-nota-chip" style="display:none">
       <span id="d-nota-txt"></span>
-    </div>
-
-    <!-- Sección de botones flotantes (FAB) -->
-    <div class="fab-group" id="d-fab-group">
-      <button class="fab-btn extra" id="fab-extra" onclick="openExtraModal()" title="Prestar más">
-        <span>+</span>
-      </button>
-      <button class="fab-btn abono" id="fab-abono" onclick="openAbonoModal()" title="Registrar abono">
-        <span>✓</span>
-      </button>
     </div>
 
     <!-- Banner pagado -->
