@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Préstamos</title>
+<meta name="theme-color" content="#c8ff57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="prestamos.css">
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login" class="active" role="main" aria-label="Pantalla de acceso">
+  <div class="login-box">
+    <div class="login-lock">🔐</div>
+    <div class="login-title">Control de Préstamos</div>
+    <div class="login-subtitle">Ingresa el código de acceso.<strong>Consulta al administrador.</strong></div>
+    <div class="pin-dots" role="group" aria-label="Dígitos ingresados">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key">1</button><button class="pin-key">2</button><button class="pin-key">3</button>
+      <button class="pin-key">4</button><button class="pin-key">5</button><button class="pin-key">6</button>
+      <button class="pin-key">7</button><button class="pin-key">8</button><button class="pin-key">9</button>
+      <button class="pin-key zero">0</button>
+      <button class="pin-key-del">⌫</button>
+    </div>
+    <div class="login-error" id="login-error" role="alert">Código incorrecto.</div>
+    <div class="login-attempts" id="login-attempts"></div>
+    <button class="btn-locked" id="btn-locked" disabled>Sistema bloqueado temporalmente</button>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="home" class="screen">
+  <div class="page-wrap">
+    <div class="home-header">
+      <div>
+        <h1>Mis<br><span>Préstamos</span></h1>
+        <p>Control de deudas · Pesos colombianos</p>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-tabs" role="tablist">
+      <button class="tab active" data-filter="activos" onclick="setFilter('activos')">Activos</button>
+      <button class="tab" data-filter="pagados" onclick="setFilter('pagados')">Pagados</button>
+      <button class="tab" data-filter="todos" onclick="setFilter('todos')">Todos</button>
+      <button class="btn-toggle-new" onclick="toggleNewCard()" id="btn-toggle-new" title="Nuevo préstamo">+</button>
+    </div>
+
+    <!-- Nuevo préstamo -->
+    <div class="card new-card" id="new-prestamo-card">
+      <h2 class="section-label">Nuevo Préstamo</h2>
+
+      <div class="field-group">
+        <label class="field-label" for="new-name">Nombre del deudor</label>
+        <input class="inp" id="new-name" type="text" placeholder="Ej: Armando, María…" maxlength="50" autocomplete="off" spellcheck="false">
+        <div class="char-counter" id="new-name-counter">0/50</div>
+      </div>
+
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label" for="new-amount">Monto prestado</label>
+          <div class="amount-wrap">
+            <span class="prefix">$</span>
+            <input class="inp" id="new-amount" type="number" placeholder="0" min="1" max="999999999" step="1">
+          </div>
+        </div>
+        <div class="field-group" style="display:none">
+          <label class="field-label">Interés</label>
+          <div class="interest-row">
+            <select class="inp sel" id="new-interest-sel" onchange="onInterestChange()">
+              <option value="0" selected>Sin interés (0%)</option>
+              <option value="2">2%</option>
+              <option value="5">5%</option>
+              <option value="10">10%</option>
+              <option value="15">15%</option>
+              <option value="20">20%</option>
+              <option value="25">25%</option>
+              <option value="30">30%</option>
+              <option value="custom">Otro %…</option>
+            </select>
+            <input class="inp" id="new-interest-custom" type="number" placeholder="%" min="0.1" max="999" step="0.1" style="display:none">
+          </div>
+        </div>
+      </div>
+
+      <div class="interest-preview" id="interest-preview" style="display:none">
+        <div class="preview-line">
+          <span>Total a cobrar (con interés):</span>
+          <strong id="preview-total">—</strong>
+        </div>
+        <div class="preview-line muted">
+          <span id="preview-breakdown"></span>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:0">
+        <label class="field-label" for="new-note">Nota (obligatoria)</label>
+        <input class="inp" id="new-note" type="text" placeholder="Ej: Para mercado, emergencia…" maxlength="50" autocomplete="off" spellcheck="false">
+      </div>
+
+      <button class="btn-create" onclick="createPrestamo()">+ Registrar Préstamo</button>
+    </div>
+
+    <div class="prestamos-list" id="prestamos-list" role="list"></div>
+    <div class="empty-home" id="empty-home">
+      <div style="font-size:2rem;margin-bottom:12px">📭</div>
+      <div>No hay préstamos aquí.<br>Registra uno arriba ↑</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL ══ -->
+<div id="detail" class="screen">
+  <div class="page-wrap">
+
+    <div class="detail-topbar">
+      <button class="btn-back" onclick="goHome()">← Volver</button>
+      <div class="detail-title-wrap">
+        <div class="detail-title" id="detail-title"
+          onclick="startEditTitle()" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter'||event.key===' ')startEditTitle()"></div>
+        <input class="detail-title-input" id="detail-title-input" type="text" maxlength="50"
+          autocomplete="off" onblur="saveTitle()"
+          onkeydown="if(event.key==='Enter')saveTitle();if(event.key==='Escape')saveTitle();">
+      </div>
+      <button class="btn-share" onclick="shareFactura()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        <span>Compartir</span>
+      </button>
+    </div>
+
+    <!-- Badge estado -->
+    <div class="status-row">
+      <span class="status-badge" id="d-badge"></span>
+      <span class="status-meta" id="d-meta"></span>
+    </div>
+
+    <!-- Progreso (arriba) -->
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="d-prog-fill"></div></div>
+      <div class="progress-lbl" id="d-prog-lbl"></div>
+    </div>
+
+    <!-- Saldo rápido bajo la barra -->
+    <div class="quick-saldo">
+      <div class="qs-row"><span class="qs-lbl bold">Saldo pendiente</span><span class="qs-val bold" id="d-saldo">—</span></div>
+      <div class="qs-row"><span class="qs-lbl">Total abonado</span><span class="qs-val blue" id="d-abonado">—</span></div>
+    </div>
+
+    <!-- Movimientos -->
+    <h3 class="section-label" id="d-historial-label" style="margin:16px 0 10px">Movimientos</h3>
+    <div class="abonos-list" id="d-abonos-list" role="list"></div>
+    <div class="empty-detail" id="d-empty">Sin movimientos aún.</div>
+
+    <div class="divider"></div>
+
+    <!-- Resumen financiero (solo con interés) -->
+    <div class="summary-card" id="d-summary-card">
+      <div class="sum-row"><span class="sum-lbl">Monto prestado</span><span class="sum-val" id="d-prestado">—</span></div>
+      <div class="sum-row" id="d-int-row"><span class="sum-lbl" id="d-int-lbl">Interés</span><span class="sum-val red" id="d-int-val">—</span></div>
+      <div class="sum-row highlight"><span class="sum-lbl">Total a pagar</span><span class="sum-val accent" id="d-total-due">—</span></div>
+      <div class="sum-divider"></div>
+      <div class="sum-row"><span class="sum-lbl bold">Saldo pendiente</span><span class="sum-val bold" id="d-saldo2">—</span></div>
+      <div class="sum-row"><span class="sum-lbl">Total abonado</span><span class="sum-val blue" id="d-abonado2">—</span></div>
+    </div>
+
+    <!-- Nota del préstamo (oculta) -->
+    <div id="d-nota-chip" style="display:none">
+      <span id="d-nota-txt"></span>
+    </div>
+
+    <!-- Sección de botones flotantes (FAB) -->
+    <div class="fab-group" id="d-fab-group">
+      <button class="fab-btn extra" id="fab-extra" onclick="openExtraModal()" title="Prestar más">
+        <span>+</span>
+      </button>
+      <button class="fab-btn abono" id="fab-abono" onclick="openAbonoModal()" title="Registrar abono">
+        <span>✓</span>
+      </button>
+    </div>
+
+    <!-- Banner pagado -->
+    <div class="paid-banner" id="d-paid-banner" style="display:none">
+      <div class="paid-icon">🎉</div>
+      <div class="paid-title">¡Préstamo Saldado!</div>
+      <div class="paid-sub">Esta deuda está completamente pagada.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL Prestar más -->
+<div class="modal-overlay" id="extra-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2 class="section-label">➕ Prestar más</h2>
+    <p class="extras-hint">Sin interés — agrega montos adicionales</p>
+    <div class="field-group">
+      <label class="field-label" for="d-extra-amount">Monto adicional</label>
+      <div class="amount-wrap">
+        <span class="prefix">$</span>
+        <input class="inp" id="d-extra-amount" type="number" placeholder="0" min="1" max="999999999" step="1">
+      </div>
+      <span class="field-error" id="d-extra-err"></span>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="d-extra-note">Nota (obligatoria)</label>
+      <input class="inp" id="d-extra-note" type="text" placeholder="Ej: Adicional mercado…" maxlength="50" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExtraModal()">Cancelar</button>
+      <button class="btn-save extra" onclick="addExtra()">+ Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL Registrar abono -->
+<div class="modal-overlay" id="abono-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2 class="section-label">Registrar Abono</h2>
+    <div class="field-group">
+      <label class="field-label" for="d-abono-amount">Valor</label>
+      <div class="amount-wrap">
+        <span class="prefix">$</span>
+        <input class="inp" id="d-abono-amount" type="number" placeholder="0" min="1" max="999999999" step="1">
+      </div>
+      <span class="field-error" id="d-abono-err"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAbonoModal()">Cancelar</button>
+      <button class="btn-save abono" onclick="addAbono()">✓ Registrar</button>
+    </div>
+    <p class="hint">Presiona Enter para registrar rápido</p>
+  </div>
+</div>
+
+<!-- MODAL eliminar préstamo -->
+<div class="modal-overlay" id="del-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3>¿Eliminar préstamo?</h3>
+    <p id="del-modal-text">Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDelete()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL eliminar abono -->
+<div class="modal-overlay" id="del-abono-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3>¿Eliminar abono?</h3>
+    <p id="del-abono-text">Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDelAbonoModal()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDeleteAbono()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL editar abono -->
+<div class="modal-overlay" id="edit-abono-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3>Editar Abono</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
+      <div class="amount-wrap">
+        <span class="prefix">$</span>
+        <input class="inp" id="edit-abono-amount" type="number" placeholder="0" min="1" max="999999999" step="1" style="padding-left:30px">
+      </div>
+      <div id="edit-abono-note-wrap">
+        <input class="inp" id="edit-abono-note" type="text" placeholder="Nota (obligatoria)" maxlength="50" autocomplete="off">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditAbonoModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveEditAbono()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="prestamos.js"></script>
+</body>
+</html>
